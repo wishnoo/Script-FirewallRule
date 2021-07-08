@@ -34,29 +34,35 @@ if ($null -ne $users) {
 
     try {
         ## Loop through the Array to delete existing old path rules
-        Write-Host "`n START: Section to delete old path rules `n"
+        Write-Host "`n START: Section to delete old path rules"
         if ($deprecatedPathLocationArray) {
             $counter = 0
             foreach ($path in $deprecatedPathLocationArray) {
-                Write-Host "OUTPUT: Path in array : $($path)"
+                Write-Host "`n OUTPUT: Path in array : $($path)"
                 ## Iterate through each user folder and remove rules with respect to the user regardless of the action
                 foreach ($user in $users) {
+                    ## variable to count the number of rules deleted for each user fullProgramPath
+                    $userRulesDeleted = 0
                     ## Combine the user folder path with path provided in the deprecated location array
                     $fullProgramPath = Join-Path -Path $user.FullName -ChildPath $path
+                    $outputString = "User Path: $($fullProgramPath)"   
+                    if (-not (Test-Path $fullProgramPath)) {
+                        $outputString += " - Path Doesn't Exist"
+                    }
                     ## Use the ErrorAction Parameter to avoid catching the error and continue the search when no rules are found.
-                    ## The ErrorVariable parameter is used to store the error in a custom name field which could be later 
+                    ## The ErrorVariable parameter is used to store the error in a custom name field which could be later used.
                     $applicationObject_ProgramItem = Get-NetFirewallApplicationFilter -Program $fullProgramPath -ErrorAction SilentlyContinue -ErrorVariable oldPathSearchError
                     If($applicationObject_ProgramItem){
                         $applicationObject_ProgramItem | Remove-NetFirewallRule
-                        Write-Host "OUTPUT: Rule with path '$($fullProgramPath)' deleted"
-                        $counter = 1
+                        # Write-Host "OUTPUT: Rule with path '$($fullProgramPath)' deleted"
+                        $counter += $applicationObject_ProgramItem.count
+                        $userRulesDeleted = $applicationObject_ProgramItem.count
                     }
+                    $outputString += " - No of Rules Deleted: $($userRulesDeleted)"
+                    Write-Host $outputString
                 }
             }
-            if ($counter -eq 0) {
-                Write-Host "OUTPUT: No Rule Deleted."
-            }
-             
+            Write-Host "`n OUTPUT: No of Firewall Rules Deleted: $($counter)"
         }
        
         else {
@@ -92,7 +98,7 @@ if ($null -ne $users) {
     try {
         Write-Host "`n START: Section to delete current path rules with specific Action `n"
         ## Use the ErrorAction Parameter to avoid catching the error and continue the search when no rules are found.
-        ## The ErrorVariable parameter is used to store the error in a custom name field which could be later 
+        ## The ErrorVariable parameter is used to store the error in a custom name field which could be later used.
         $rulesWithAction = Get-NetFirewallRule -Action $actionToDelete -ErrorAction SilentlyContinue -ErrorVariable currentPathBlockSearchError
         if ($rulesWithAction) {
             ## Input object of Get-NetFirewallRule to Get-NetFirewallApplicationFilter to obtain properties based on Get-NetFirewallApplicationFilter
@@ -112,7 +118,7 @@ if ($null -ne $users) {
             }
         }
         else {
-            Write-Host "OUTPUT: No firewall rules with given action to delete"
+            Write-Host "OUTPUT: No Firewall Rules with given action to delete"
         }
     }
     catch {
@@ -141,18 +147,19 @@ if ($null -ne $users) {
             $counter = 0
             foreach($user in $users){
                 $fullProgramPath = Join-Path -Path $user.FullName -ChildPath $currentPathLocation
+                $userRulesAdded = 0
                 if (Test-Path $fullProgramPath) {
                     if (-not (Get-NetFirewallApplicationFilter -Program $fullProgramPath -ErrorAction SilentlyContinue)) {
                         $ruleName = "Microsoft Teams for user $($user.Name)"
                         "UDP", "TCP" | ForEach-Object { New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Profile Domain -Program $fullProgramPath -Action $actionToAdd -Protocol $_ } | Out-Null
-                        Write-Host "OUTPUT: Rule for $($ruleName) for the program path $($fullProgramPath) added"
-                        $counter = 1
+                        
+                        $counter += 2
+                        $userRulesAdded += 2
+                        Write-Host "OUTPUT: No of Rules for `"$($ruleName)`" for the program path $($fullProgramPath) added: $($userRulesAdded)"
                     }
                 }
             }
-            if ($counter -eq 0) {
-                Write-Host "OUTPUT: No Firewall Rule Added."
-            }
+            Write-Host "`n OUTPUT: No of Firewall Rule Added: $($counter)"
         }
         else {
             Write-Host "OUTPUT: Path is empty"
