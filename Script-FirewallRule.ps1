@@ -19,6 +19,12 @@ $actionToDelete = "Block"
 ## Action value required to add rules in the firewall
 $actionToAdd = "Allow"
 
+## Default Name for rule
+$defaultrulename = "Microsoft Teams for user"
+
+## Default Protocol rule
+$protocolforrule = @("UDP","TCP")
+
 $users = Get-ChildItem (Join-Path -Path $env:SystemDrive -ChildPath 'Users') -Exclude 'Public', 'ADMINI~*'
 
 if ($null -ne $users) {
@@ -150,9 +156,10 @@ if ($null -ne $users) {
                 $userRulesAdded = 0
                 if (Test-Path $fullProgramPath) {
                     if (-not (Get-NetFirewallApplicationFilter -Program $fullProgramPath -ErrorAction SilentlyContinue)) {
-                        $ruleName = "Microsoft Teams for user $($user.Name)"
-                        "UDP", "TCP" | ForEach-Object { New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Profile Domain -Program $fullProgramPath -Action $actionToAdd -Protocol $_ } | Out-Null
+                        $ruleName = "$defaultrulename $($user.Name)"
+                        $protocolforrule | ForEach-Object { New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Profile Domain -Program $fullProgramPath -Action $actionToAdd -Protocol $_ } | Out-Null
                         
+                        ## The count is 2 because a rule for UDP and TCP is made respectively. 
                         $counter += 2
                         $userRulesAdded += 2
                         Write-Host "OUTPUT: No of Rules for `"$($ruleName)`" for the program path $($fullProgramPath) added: $($userRulesAdded)"
