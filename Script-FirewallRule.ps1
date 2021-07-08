@@ -66,7 +66,9 @@ if ($null -ne $users) {
     }
     catch {
         Write-Host "`n START: Catch Section to delete old path rules `n "
-        Write-Host "Exception.Message [$($Error)]"
+        Write-Host "Exception.Message [$($_.Exception.Message)]"
+        Write-Host "Invocation Command [$($_.InvocationInfo.MyCommand.Name)]"
+        Write-Host "FullyQualifiedErrorId [$($_.FullyQualifiedErrorId)]"
         Write-Host "`n END: Catch Section to delete old path rules `n"
     }
     finally{
@@ -91,7 +93,8 @@ if ($null -ne $users) {
         Write-Host "`n START: Section to delete current path rules with specific Action `n"
         ## Use the ErrorAction Parameter to avoid catching the error and continue the search when no rules are found.
         ## The ErrorVariable parameter is used to store the error in a custom name field which could be later 
-        $rulesWithAction = Get-NetFirewallRule -Action $actionToDelete -ErrorAction SilentlyContinue -ErrorVariable currentPathBlockSearchError
+        $rulesWithAction = Get-NetFirewallRule -Action $actionToDelete
+        # $rulesWithAction = Get-NetFirewallRule -Action $actionToDelete -ErrorAction SilentlyContinue -ErrorVariable currentPathBlockSearchError
         if ($rulesWithAction) {
             ## Input object of Get-NetFirewallRule to Get-NetFirewallApplicationFilter to obtain properties based on Get-NetFirewallApplicationFilter
             $applicationObject_Action = $rulesWithAction | Get-NetFirewallApplicationFilter
@@ -117,6 +120,8 @@ if ($null -ne $users) {
         Write-Host "`n START: Catch section to delete current path rules with specific Action `n"
         Write-Host "Exception.Message [$($_.Exception.Message)]"
         Write-Host "Invocation Command [$($_.InvocationInfo.MyCommand.Name)]"
+        Write-Host "FullyQualifiedErrorId [$($_.FullyQualifiedErrorId)]"
+
         Write-Host "`n END: Catch section to delete current path rules with specific Action `n"
     }
     finally{
@@ -147,7 +152,7 @@ if ($null -ne $users) {
                 }
             }
             if ($counter -eq 0) {
-                Write-Host "OUTPUT: No Rule Added."
+                Write-Host "OUTPUT: No Firewall Rule Added."
             }
         }
         else {
@@ -157,6 +162,8 @@ if ($null -ne $users) {
     catch {
         Write-Host "`n BEGIN: Catch Section to Add new rules based on the current path `n"
         Write-Host "Exception.Message [$($_.Exception.Message)]"
+        Write-Host "Invocation Command [$($_.InvocationInfo.MyCommand.Name)]"
+        Write-Host "FullyQualifiedErrorId [$($_.FullyQualifiedErrorId)]"
         Write-Host "`n END: Catch Section to Add new rules based on the current path `n"
     }
     finally{
