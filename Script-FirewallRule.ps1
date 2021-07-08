@@ -8,10 +8,10 @@ $ErrorActionPreference = 'Stop'
 
 ## This array is used to store Teams old file locations. For example, Teams is currently in Appdata if that is changed we will
 ## not know what to delete. So, we store the old locations here in order to delete them. 
-$deprecatedPathLocationArray = @("AppData\Local\Microsoft\Teams\Current\Teams.exe")
+$deprecatedPathLocationArray = @()
 
 ## Variable to store the path string with the current location of the rule.
-$currentPathLocation = ""
+$currentPathLocation = "AppData\Local\Microsoft\Teams\Current\Teams.exe"
 
 ## Action value depicts the action filter we can choose e.g.: "Allow","Block" 
 $actionToDelete = "Block"
@@ -93,8 +93,7 @@ if ($null -ne $users) {
         Write-Host "`n START: Section to delete current path rules with specific Action `n"
         ## Use the ErrorAction Parameter to avoid catching the error and continue the search when no rules are found.
         ## The ErrorVariable parameter is used to store the error in a custom name field which could be later 
-        $rulesWithAction = Get-NetFirewallRule -Action $actionToDelete
-        # $rulesWithAction = Get-NetFirewallRule -Action $actionToDelete -ErrorAction SilentlyContinue -ErrorVariable currentPathBlockSearchError
+        $rulesWithAction = Get-NetFirewallRule -Action $actionToDelete -ErrorAction SilentlyContinue -ErrorVariable currentPathBlockSearchError
         if ($rulesWithAction) {
             ## Input object of Get-NetFirewallRule to Get-NetFirewallApplicationFilter to obtain properties based on Get-NetFirewallApplicationFilter
             $applicationObject_Action = $rulesWithAction | Get-NetFirewallApplicationFilter
